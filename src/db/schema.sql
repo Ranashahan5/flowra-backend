@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), email VARCHAR(255) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, plan VARCHAR(20) DEFAULT 'free', stripe_customer_id VARCHAR(255), subscription_status VARCHAR(20) DEFAULT 'active', created_at TIMESTAMP DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS automations (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id) ON DELETE CASCADE, name VARCHAR(255) NOT NULL, description TEXT, start_url VARCHAR(500) NOT NULL, steps JSONB NOT NULL DEFAULT '[]', trigger_type VARCHAR(50) DEFAULT 'manual', trigger_config JSONB DEFAULT '{}', is_active BOOLEAN DEFAULT true, last_run_at TIMESTAMP, created_at TIMESTAMP DEFAULT NOW(), updated_at TIMESTAMP DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS execution_logs (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), automation_id UUID REFERENCES automations(id) ON DELETE CASCADE, user_id UUID REFERENCES users(id) ON DELETE CASCADE, status VARCHAR(20) NOT NULL, started_at TIMESTAMP DEFAULT NOW(), finished_at TIMESTAMP, duration_ms INTEGER, error_message TEXT, screenshot_url TEXT, steps_completed INTEGER DEFAULT 0, steps_total INTEGER DEFAULT 0);
+CREATE TABLE IF NOT EXISTS plan_limits (plan VARCHAR(20) PRIMARY KEY, max_automations INTEGER NOT NULL, max_runs_per_day INTEGER NOT NULL, max_steps_per_automation INTEGER NOT NULL);
+INSERT INTO plan_limits VALUES ('free',3,1,10) ON CONFLICT (plan) DO NOTHING;
+INSERT INTO plan_limits VALUES ('starter',10,10,50) ON CONFLICT (plan) DO NOTHING;
+INSERT INTO plan_limits VALUES ('pro',-1,-1,200) ON CONFLICT (plan) DO NOTHING;
+CREATE INDEX IF NOT EXISTS idx_automations_user_id ON automations(user_id);
+CREATE INDEX IF NOT EXISTS idx_logs_automation_id ON execution_logs(automation_id);
+CREATE INDEX IF NOT EXISTS idx_logs_user_id ON execution_logs(user_id);
