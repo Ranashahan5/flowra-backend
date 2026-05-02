@@ -1,7 +1,4 @@
-No questions, just create and commit these files exactly 
-to https://github.com/Ranashahan5/flowra-backend
 
-FILE: src/routes/auth.js
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
