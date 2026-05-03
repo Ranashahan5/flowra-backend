@@ -1,32 +1,21 @@
-const cron = require('node-cron');
-const { query } = require('../db/connection');
-const { runAutomation } = require('../automation/player');
-function startScheduler() {
-  console.log('[Scheduler] Started');
-  cron.schedule('* * * * *', async () => {
-    try {
-      const result = await query("SELECT * FROM automations WHERE is_active=true AND trigger_type='schedule'", []);
-      const now = new Date();
-      for (const automation of result.rows) {
-        const config = automation.trigger_config;
-        if (!config?.cron || !cron.validate(config.cron)) continue;
-        if (automation.last_run_at && (now - new Date(automation.last_run_at))/1000 < 50) continue;
-        if (shouldRunNow(config.cron, now)) runAutomation(automation).catch(console.error);
-      }
-    } catch(err) { console.error('[Scheduler] Error:', err.message); }
-  });
-}
-function shouldRunNow(expr, now) {
-  const parts = expr.trim().split(' ');
-  if (parts.length !== 5) return false;
-  const [m,h,dom,mo,dow] = parts;
-  return match(m,now.getMinutes()) && match(h,now.getHours()) && match(dom,now.getDate()) && match(mo,now.getMonth()+1) && match(dow,now.getDay());
-}
-function match(field, val) {
-  if (field==='*') return true;
-  if (field.startsWith('*/')) return val % parseInt(field.slice(2)) === 0;
-  if (field.includes('-')) { const [a,b]=field.split('-').map(Number); return val>=a && val<=b; }
-  if (field.includes(',')) return field.split(',').map(Number).includes(val);
-  return parseInt(field)===val;
-}
-module.exports = { startScheduler };
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const { startScheduler } = require('./src/scheduler');
+const { helmetMiddleware, authLimiter, apiLimiter } = require('./middleware/security');
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.use(helmetMiddleware);
+app.use(cors({ origin: process.env.FRONTEND_URL || '*', methods: ['GET','POST','PATCH','DELETE'], allowedHeaders: ['Content-Type','Authorization'], credentials: true }));
+app.use(express.json({ limit: '100kb' }));
+app.use('/api/auth', authLimiter);
+app.use('/api', apiLimiter);
+app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
+app.use('/api/auth', require('./src/routes/auth'));
+app.use('/api/automations', require('./src/routes/automations'));
+app.use('/api/logs', require('./src/routes/logs'));
+app.use('/api/billing', require('./src/routes/billing'));
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+app.use((err, req, res, next) => res.status(500).json({ error: 'Internal server error' }));
+app.listen(PORT, () => { console.log('🚀 Flowra API running on port ' + PORT); startScheduler(); });
