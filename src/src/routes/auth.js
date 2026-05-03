@@ -1,9 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { query } = require('../db/connection');
-const { validateEmail } = require('../middleware/security');
-const { authenticate } = require('../middleware/auth');
+const { query } = require('../../db/connection');
+const { validateEmail } = require('../../middleware/security');
+const { authenticate } = require('../../middleware/auth');
 const router = express.Router();
 router.post('/register', async (req, res) => {
   let { email, password } = req.body;
