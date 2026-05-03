@@ -1,6 +1,6 @@
-const express = require('express');
-const { query } = require('../db/connection');
-const { authenticate } = require('../middleware/auth');
+const { query } = require('../../db/connection');
+const { authenticate } = require('../../middleware/auth');
+const { authLimiter } = require('../../middleware/security');
 const { authLimiter } = require('../middleware/security');
 const router = express.Router();
 function getStripe() { if (!process.env.STRIPE_SECRET_KEY) throw new Error('Stripe not configured'); return require('stripe')(process.env.STRIPE_SECRET_KEY); }
