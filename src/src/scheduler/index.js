@@ -1,6 +1,6 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+const cron = require('node-cron');
+const { query } = require('../../db/connection');
+const { runAutomation } = require('../automation/player');
 const { startScheduler } = require('./src/scheduler');
 const { helmetMiddleware, authLimiter, apiLimiter } = require('./middleware/security');
 const app = express();
