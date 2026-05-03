@@ -1,5 +1,4 @@
-const puppeteer = require('puppeteer');
-const { query } = require('../db/connection');
+const { query } = require('../../db/connection');
 const runningTasks = new Map();
 async function runAutomation(automation) {
   if (runningTasks.has(automation.id)) return;
