@@ -1,7 +1,7 @@
+const express = require('express');
 const { query } = require('../../db/connection');
 const { authenticate } = require('../../middleware/auth');
 const { authLimiter } = require('../../middleware/security');
-const { authLimiter } = require('../middleware/security');
 const router = express.Router();
 function getStripe() { if (!process.env.STRIPE_SECRET_KEY) throw new Error('Stripe not configured'); return require('stripe')(process.env.STRIPE_SECRET_KEY); }
 const PLANS = { starter: { name:'Starter', priceId: process.env.STRIPE_STARTER_PRICE_ID, maxAutomations:10, maxRunsPerDay:10 }, pro: { name:'Pro', priceId: process.env.STRIPE_PRO_PRICE_ID, maxAutomations:-1, maxRunsPerDay:-1 } };
